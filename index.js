@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js"
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js"
+import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js"
 
 const firebaseConfig = {
     apiKey: "AIzaSyA6uQNIRA_5yjqn1h7sWbWIDpxFn_v65Uk",
@@ -25,9 +25,12 @@ publishBtn.addEventListener("click", function () {
     const newEndorsement = {
         to: inputToEl.value,
         message: inputEl.value,
-        from: inputFromEl.value
+        from: inputFromEl.value,
+        likes: 0
     }
-    addEndorsement(newEndorsement)
+    if (newEndorsement.message) {
+        addEndorsement(newEndorsement)    
+    }
     clearInputEls()
 })
 
@@ -46,23 +49,42 @@ function clearEndorsementList() {
 }
 
 function appendItemToList(item) {
-    // <div class="endorsement">
-    //     <p class="bold">To Leanne</p>
-    //     <p>Leanne! Thank you so much for helping me with the March accounting. Saved so much time because of you! 💜 Frode</p>
-    //     <div>
-    //         <p class="bold">From Frode</p>
-    //         <p class="bolder">❤ 4</p>
-    //     </div>
-    // </div>
-    let newItemEl = document.createElement("div")
-    const endorsement = item[1]
+    const newItemEl = document.createElement("div")
     newItemEl.className = "endorsement"
+    const endorsement = item[1]
+    const newLikesEl = createLikesEl(endorsement.likes, item[0])
+
     newItemEl.innerHTML = `
         <p class="bold">To ${endorsement.to}</p>
         <p>${endorsement.message}</p>
-        <p class="bold">From ${endorsement.from}</p>
+        <div id="${item[0]}-div-el">
+            <p class="bold">From ${endorsement.from}</p>
+        </div>
     `
-    endorsementListEl.append(newItemEl)
+    endorsementListEl.prepend(newItemEl)
+
+    const newDivEl = document.getElementById(`${item[0]}-div-el`)
+    newDivEl.append(newLikesEl)
+}
+
+function createLikesEl(likes, itemID) {
+    const newLikesEl = document.createElement("p")
+    newLikesEl.className = "bolder"
+    newLikesEl.textContent = `❤ ${likes ?? 0}`
+
+    newLikesEl.addEventListener("click", function () {
+        if (localStorage.getItem(`${itemID}-liked`)) {
+            return
+        }
+        const updateData = {
+            likes: (likes ?? 0) + 1
+        }
+        const itemLocationInDB = ref(database, `endorsements_v2/${itemID}`)
+        update(itemLocationInDB, updateData)
+        localStorage.setItem(`${itemID}-liked`, 1)
+    })
+
+    return newLikesEl
 }
 
 onValue(endorsementsInDB, function (snapshot) {
