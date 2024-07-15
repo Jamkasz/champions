@@ -13,23 +13,32 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
-const endorsementsInDB = ref(database, "endorsements")
+const endorsementsInDB = ref(database, "endorsements_v2")
 
 const publishBtn = document.getElementById("publish-btn")
 const inputEl = document.getElementById("input-el")
+const inputFromEl = document.getElementById("from-input-el")
+const inputToEl = document.getElementById("to-input-el")
 const endorsementListEl = document.getElementById("endorsement-list-el")
 
 publishBtn.addEventListener("click", function () {
-    addEndorsement(inputEl.value)
-    clearInputEl()
+    const newEndorsement = {
+        to: inputToEl.value,
+        message: inputEl.value,
+        from: inputFromEl.value
+    }
+    addEndorsement(newEndorsement)
+    clearInputEls()
 })
 
 function addEndorsement(value) {
     push(endorsementsInDB, value)
 }
 
-function clearInputEl() {
+function clearInputEls() {
+    inputToEl.value = ""
     inputEl.value = ""
+    inputFromEl.value = ""
 }
 
 function clearEndorsementList() {
@@ -37,8 +46,22 @@ function clearEndorsementList() {
 }
 
 function appendItemToList(item) {
-    let newItemEl = document.createElement("p")
-    newItemEl.textContent = item[1]
+    // <div class="endorsement">
+    //     <p class="bold">To Leanne</p>
+    //     <p>Leanne! Thank you so much for helping me with the March accounting. Saved so much time because of you! 💜 Frode</p>
+    //     <div>
+    //         <p class="bold">From Frode</p>
+    //         <p class="bolder">❤ 4</p>
+    //     </div>
+    // </div>
+    let newItemEl = document.createElement("div")
+    const endorsement = item[1]
+    newItemEl.className = "endorsement"
+    newItemEl.innerHTML = `
+        <p class="bold">To ${endorsement.to}</p>
+        <p>${endorsement.message}</p>
+        <p class="bold">From ${endorsement.from}</p>
+    `
     endorsementListEl.append(newItemEl)
 }
 
